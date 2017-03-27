@@ -155,6 +155,8 @@ public class LambdaDCSExecutorTest {
       return TableKnowledgeGraph.fromFilename("lib/data/tables/csv/204-csv/495.tsv");
     } else if ("csv3".equals(name)) {
       return TableKnowledgeGraph.fromFilename("lib/data/tables/csv/203-csv/839.tsv");
+    } else if ("geo880".equals(name)) {
+      return NaiveKnowledgeGraph.fromFile("lib/data/geo880/geo880.kg");
     }
     throw new RuntimeException("Unknown graph name: " + name);
   }
@@ -271,5 +273,40 @@ public class LambdaDCSExecutorTest {
     runFormula(executor,
         "(- (number 1926) (argmax (number 1) (number 1) ((reverse fb:cell.cell.number) (or (or (or fb:cell.1920 fb:cell.1925) fb:cell.1926) fb:cell.1946)) (reverse (lambda x (sum ((reverse fb:cell.cell.number) (fb:cell.cell.number (var x))))))))",
         graph, matches("(number 6)"));
+  }
+  
+  // ============================================================
+  // Geo880 execution test
+  // ============================================================
+  
+  @Test(groups = "geo880") public void geo880Test() {
+    KnowledgeGraph graph = getKnowledgeGraph("geo880");
+    // what is the highest point in florida ?
+    runFormula(executor,
+        "(!fb:location.location.high_point fb:state.florida)",
+        graph, matches("(name fb:place.walton_county)"));
+    // what are the high points of states surrounding mississippi ?
+    runFormula(executor,
+        "(!fb:location.location.high_point (fb:location.us_state.border fb:state.mississippi))",
+        graph, matchesAll(
+            "(name fb:place.cheaha_mountain)",
+            "(name fb:place.clingmans_dome)",
+            "(name fb:place.driskill_mountain)",
+            "(name fb:place.magazine_mountain)"));
+    // what state has the shortest river ?
+    runFormula(executor,
+        "(and (fb:type.object.type fb:location.us_state) (!fb:location.river.traverse "
+        + "(argmin (number 1) (number 1) (fb:type.object.type fb:location.river) fb:location.river.length)))",
+        graph, matchesAll(
+            "(name fb:state.delaware)",
+            "(name fb:state.new_jersey)",
+            "(name fb:state.new_york)",
+            "(name fb:state.pennsylvania)"));
+    // what is the state that contains the highest point ?
+    runFormula(executor,
+        "(and (fb:type.object.type fb:location.us_state) (!fb:location.location.containedby "
+        + "(argmax (number 1) (number 1) (fb:type.object.type fb:place.place) fb:location.location.elevation)))",
+        graph, matches("(name fb:state.alaska)"));
+    
   }
 }

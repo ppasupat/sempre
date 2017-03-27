@@ -997,19 +997,30 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
   # Usual header
   header('core,tables,corenlp,geo880'),
   'edu.stanford.nlp.sempre.Main',
+
   # Fig parameters
   figOpts,
   o('executor', 'tables.lambdadcs.LambdaDCSExecutor'),
   o('JoinFn.specializedTypeCheck', false), o('JoinFn.typeInference', false),
+
   # Parser
-  o('Builder.parser', 'BeamParser'),
-  o('Parser.coarsePrune'),
+  letDefault(:parser, 'beam'),
+  sel(:parser, {
+    'beam' => l(
+      o('Builder.parser', 'BeamParser'),
+      o('Parser.coarsePrune'),
+      o('Grammar.inPaths','lib/data/geo880/geo880.grammar'),
+    nil),
+    'float' => l(
+      o('Builder.parser', 'FloatingParser'),
+      o('useSizeInsteadOfDepth'),
+      o('FloatingParser.maxDepth', 15),
+      o('Grammar.inPaths','lib/data/geo880/geo880.floating.grammar'),
+    nil),
+  }),
  
   # Evaluation
   o('Builder.valueEvaluator', 'geo880.Geo880ValueEvaluator'),
-
-  # Grammar
-  o('Grammar.inPaths','lib/data/geo880/geo880.grammar'),
 
   # Type hierarchy
   o('Geo880TypeLookup.typeHierarchyPath', 'lib/data/geo880/geo880.type_hierarchy'),
@@ -1028,6 +1039,7 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
     sel(:data,
       l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.examples'), unbalancedTrainDevSplit), # (0) train 0.8, dev 0.2
       l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.examples', 'test,lib/data/geo880/geo880-test.examples')), # (1) Don't run on test yet!
+      l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-debug.examples')),  # (2) Debug
     nil),
     sel(:data,
       l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.preprocessed.examples'), unbalancedTrainDevSplit), # (0) train 0.8, dev 0.2
@@ -1037,6 +1049,7 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
 
   # Load the graph
   o('Dataset.globalGraphPath', 'lib/data/geo880/geo880.kg'),
+
   # Verbosity
   letDefault(:verbose, 0),
   sel(:verbose,
@@ -1048,8 +1061,12 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
       o('JoinFn.showTypeCheckFailures'),
     nil),
   nil),
+  # Prevent verbose denotations
+  o('Derivation.showValues', false), o('Derivation.showFirstValue', true),
+
   # Language Analyzer
   l(o('LanguageAnalyzer', 'corenlp.CoreNLPAnalyzer'), o('annotators', *'tokenize ssplit pos lemma ner'.split)),
+  
   # Regularization
   letDefault(:l1, 1),
   sel(:l1,
@@ -1057,6 +1074,7 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
     l(o('Params.l1Reg','lazy'), o('Params.l1RegCoeff', '3e-5')),
     l(o('Params.l1Reg','lazy'), selo(nil, 'Params.l1RegCoeff', 0, 0.00001, 0.0001, 0.001, 0.01)),
   nil),
+  
   # Features
   letDefault(:feat, 'freebase'),
   sel(:feat, {
@@ -1066,6 +1084,17 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
 #      o('FeatureExtractor.featureDomains', 'rule opCount constant whType lemmaAndBinaries denotation lexAlign joinPos skipPos'.split),
     nil),
   }),
+
+  # Pruning
+  letDefault(:pruning, 1),
+  sel(:pruning,
+    l(),
+    l(
+      o('DerivationPruner.pruningStrategies', 'emptyDenotation', 'nonLambdaError'),
+      o('recursivePruning', false),
+    nil),
+  nil),
+
 nil) })
 
 ############################################################
