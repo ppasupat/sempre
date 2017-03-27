@@ -1022,11 +1022,19 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
   o('Learner.maxTrainIters', 3),
 
   # Dataset
+  letDefault(:preprocess, 0),   # (0) original utterances, (1) converted "largest" -> "most large", etc.
   letDefault(:data, 0),
-  sel(:data,
-    l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.preprocessed.examples'), unbalancedTrainDevSplit), # (0) train 0.8, dev 0.2
-    l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.examples', 'test,lib/data/geo880/geo880-test.preprocessed/examples')), # (1) Don't run on test yet!
+  sel(:preprocess,
+    sel(:data,
+      l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.examples'), unbalancedTrainDevSplit), # (0) train 0.8, dev 0.2
+      l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.examples', 'test,lib/data/geo880/geo880-test.examples')), # (1) Don't run on test yet!
+    nil),
+    sel(:data,
+      l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.preprocessed.examples'), unbalancedTrainDevSplit), # (0) train 0.8, dev 0.2
+      l(o('Dataset.inPaths', 'train,lib/data/geo880/geo880-train.preprocessed.examples', 'test,lib/data/geo880/geo880-test.preprocessed.examples')), # (1) Don't run on test yet!
+    nil),
   nil),
+
   # Load the graph
   o('Dataset.globalGraphPath', 'lib/data/geo880/geo880.kg'),
   # Verbosity
@@ -1043,7 +1051,7 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
   # Language Analyzer
   l(o('LanguageAnalyzer', 'corenlp.CoreNLPAnalyzer'), o('annotators', *'tokenize ssplit pos lemma ner'.split)),
   # Regularization
-  letDefault(:l1, 0),
+  letDefault(:l1, 1),
   sel(:l1,
     l(),
     l(o('Params.l1Reg','lazy'), o('Params.l1RegCoeff', '3e-5')),
