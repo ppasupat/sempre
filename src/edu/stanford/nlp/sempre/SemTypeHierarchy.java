@@ -46,7 +46,6 @@ public class SemTypeHierarchy {
 
   // Add standard supertypes of entity
   public void addEntitySupertypes(String type) {
-    // LogInfo.logs("addEntitySupertypes %s", type);
     addSupertype(type, type);
     addSupertype(type, CanonicalNames.ENTITY);
     addSupertype(type, CanonicalNames.ANY);
