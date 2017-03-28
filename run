@@ -1083,6 +1083,10 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
       o('FeatureExtractor.featureDomains', 'rule opCount constant whType span lemmaAndBinaries denotation lexAlign joinPos skipPos'.split),
 #      o('FeatureExtractor.featureDomains', 'rule opCount constant whType lemmaAndBinaries denotation lexAlign joinPos skipPos'.split),
     nil),
+    'tables' => l(
+      o('FeatureExtractor.featureDomains', 'phrase-predicate'),
+      o('FeatureExtractor.featureComputers', 'tables.features.PhrasePredicateFeatureComputer'),
+    nil),
   }),
 
   # Pruning
@@ -1090,7 +1094,8 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
   sel(:pruning,
     l(),
     l(
-      o('DerivationPruner.pruningStrategies', 'emptyDenotation', 'nonLambdaError'),
+      o('DerivationPruner.pruningStrategies', 'emptyDenotation',
+        'nonLambdaError', 'badSummarizerHead', 'sameMerge'),
       o('recursivePruning', false),
     nil),
   nil),
