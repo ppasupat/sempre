@@ -1014,7 +1014,7 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
     'float' => l(
       o('Builder.parser', 'FloatingParser'),
       o('useSizeInsteadOfDepth'),
-      o('FloatingParser.maxDepth', 15),
+      o('FloatingParser.maxDepth', 12),
       o('Grammar.inPaths','lib/data/geo880/geo880.floating.grammar'),
     nil),
   }),
@@ -1030,7 +1030,7 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
   o('SimpleLexicon.inPaths', 'lib/data/geo880/geo880.lexicon'),
   
   # Learner
-  o('Learner.maxTrainIters', 3),
+  o('Learner.maxTrainIters', 5),
 
   # Dataset
   letDefault(:preprocess, 0),   # (0) original utterances, (1) converted "largest" -> "most large", etc.
@@ -1053,7 +1053,12 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
   # Verbosity
   letDefault(:verbose, 0),
   sel(:verbose,
-    l(),
+    l(
+      o('maxPrintedTrue', 10),
+      o('maxPrintedPredictions', 10),
+      o('Derivation.showValues', false),
+      o('Derivation.showFirstValue', true),
+    nil),
     l(
       o('showRules'),
       o('Parser.verbose', 2),
@@ -1061,8 +1066,6 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
       o('JoinFn.showTypeCheckFailures'),
     nil),
   nil),
-  # Prevent verbose denotations
-  o('Derivation.showValues', false), o('Derivation.showFirstValue', true),
 
   # Language Analyzer
   l(o('LanguageAnalyzer', 'corenlp.CoreNLPAnalyzer'), o('annotators', *'tokenize ssplit pos lemma ner'.split)),
