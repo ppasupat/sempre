@@ -7,7 +7,7 @@ import fig.basic.*;
 import edu.stanford.nlp.sempre.*;
 
 /**
- * Static class for collaborative pruning.
+ * Macro-based pruning
  */
 public class CollaborativePruner {
   public static class Options {
@@ -24,38 +24,34 @@ public class CollaborativePruner {
     @Option(gloss = "Maximum number of times to fall back to exploration")
     public int maxExplorationIters = Integer.MAX_VALUE;
   }
-
   public static Options opts = new Options();
 
-  public enum Mode { EXPLORE, EXPLOIT, NONE }
+  public static enum Mode { EXPLORE, EXPLOIT, NONE }
 
-  public static Mode mode = Mode.NONE;
-  public static CPruneStats stats = new CPruneStats();
-  public static CustomGrammar customGrammar = new CustomGrammar();
-
-  // Static class; do not instantiate
-  private CollaborativePruner() { throw new RuntimeException("Cannot instantiate CollaborativePruner"); }
+  public Mode mode = Mode.NONE;
+  public CPruneStats stats = new CPruneStats();
+  public CustomGrammar customGrammar = new CustomGrammar();
 
   // Global variables
   // Nearest neighbors
-  static Map<String, List<String>> uidToCachedNeighbors;
+  Map<String, List<String>> uidToCachedNeighbors;
   // uid => pattern
-  static Map<String, FormulaPattern> consistentPattern = new HashMap<>();
+  Map<String, FormulaPattern> consistentPattern = new HashMap<>();
   // patternString => customRuleString
-  static Map<String, Set<String>> customRules = new HashMap<>();
+  Map<String, Set<String>> customRules = new HashMap<>();
   // set of patternStrings
-  static Set<String> allConsistentPatterns = new HashSet<>();
+  Set<String> allConsistentPatterns = new HashSet<>();
 
   // Example-level variables
-  public static boolean foundConsistentDerivation = false;
-  public static Map<String, FormulaPattern> predictedPatterns;
-  public static List<Rule> predictedRules;
+  public boolean foundConsistentDerivation = false;
+  public Map<String, FormulaPattern> predictedPatterns;
+  public List<Rule> predictedRules;
 
   /**
    * Read the cached neighbors file.
    * Line Format: ex_id [tab] neighbor_id1,neighbor_id2,...
    */
-  public static void loadNeighbors() {
+  public void loadNeighbors() {
     if (opts.neighborFilePath == null) {
       LogInfo.logs("neighborFilePath is null.");
       return;
@@ -78,8 +74,8 @@ public class CollaborativePruner {
     LogInfo.end_track();
   }
 
-  public static void initialize(Example ex, Mode mode) {
-    CollaborativePruner.mode = mode;
+  public void initialize(Example ex, Mode mode) {
+    this.mode = mode;
     predictedRules = null;
     predictedPatterns = null;
     foundConsistentDerivation = false;
@@ -88,7 +84,7 @@ public class CollaborativePruner {
     }
   }
 
-  static void preprocessExample(Example ex) {
+  void preprocessExample(Example ex) {
     Map<String, FormulaPattern> patternFreqMap = new HashMap<>();
     List<String> cachedNeighbors = uidToCachedNeighbors.get(ex.id);
     int total = 0;
@@ -137,7 +133,7 @@ public class CollaborativePruner {
     LogInfo.end_track();
   }
 
-  public static String getPatternString(Derivation deriv) {
+  public String getPatternString(Derivation deriv) {
     if (deriv.cat.equals("$TOKEN") || deriv.cat.equals("$PHRASE")
         || deriv.cat.equals("$LEMMA_TOKEN") || deriv.cat.equals("$LEMMA_PHRASE")) {
       return deriv.cat;
@@ -146,7 +142,7 @@ public class CollaborativePruner {
     }
   }
 
-  public static void addRules(String patternString, Derivation deriv, Example ex) {
+  public void addRules(String patternString, Derivation deriv, Example ex) {
     if (!customRules.containsKey(patternString)) {
       customRules.put(patternString, new HashSet<String>());
     }
@@ -158,7 +154,7 @@ public class CollaborativePruner {
    * Get called when a (consistent) formula is found.
    * Update the consistent patterns.
    */
-  public static void updateConsistentPattern(ValueEvaluator evaluator, Example ex, Derivation deriv) {
+  public void updateConsistentPattern(ValueEvaluator evaluator, Example ex, Derivation deriv) {
     String uid = ex.id;
     if (ex.targetValue != null)
       deriv.compatibility = evaluator.getCompatibility(ex.targetValue, deriv.value);
@@ -180,7 +176,7 @@ public class CollaborativePruner {
     }
   }
 
-  public static FormulaPattern getConsistentPattern(Example ex) {
+  public FormulaPattern getConsistentPattern(Example ex) {
     return consistentPattern.get(ex.id);
   }
 

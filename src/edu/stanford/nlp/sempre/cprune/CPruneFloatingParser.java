@@ -10,20 +10,22 @@ import fig.basic.LogInfo;
  */
 public class CPruneFloatingParser extends FloatingParser {
 
+  CollaborativePruner pruner;
   FloatingParser exploreParser;
 
   public CPruneFloatingParser(Spec spec) {
     super(spec);
+    pruner = new CollaborativePruner();
     exploreParser = new FloatingParser(spec).setEarlyStopping(true, CollaborativePruner.opts.maxDerivations);
   }
 
   @Override
   public void onBeginDataGroup(int iter, int numIters, String group) {
-    if (CollaborativePruner.uidToCachedNeighbors == null) {
-      CollaborativePruner.customGrammar.init(grammar);
-      CollaborativePruner.loadNeighbors();
+    if (pruner.uidToCachedNeighbors == null) {
+      pruner.customGrammar.init(grammar);
+      pruner.loadNeighbors();
     }
-    CollaborativePruner.stats.reset(iter + "." + group);
+    pruner.stats.reset(iter + "." + group);
   }
 
   @Override
@@ -35,8 +37,11 @@ public class CPruneFloatingParser extends FloatingParser {
 
 class CPruneFloatingParserState extends ParserState {
 
+  CollaborativePruner pruner;
+
   public CPruneFloatingParserState(Parser parser, Params params, Example ex, boolean computeExpectedCounts) {
     super(parser, params, ex, computeExpectedCounts);
+    pruner = ((CPruneFloatingParser) parser).pruner;
   }
 
   @Override
@@ -46,22 +51,22 @@ class CPruneFloatingParserState extends ParserState {
     if (computeExpectedCounts) {
       LogInfo.begin_track("Summary of Collaborative Pruning");
       LogInfo.logs("Exploit succeeds: " + exploitSucceeds);
-      LogInfo.logs("Exploit success rate: " + CollaborativePruner.stats.successfulExploit + "/" + CollaborativePruner.stats.totalExploit);
+      LogInfo.logs("Exploit success rate: " + pruner.stats.successfulExploit + "/" + pruner.stats.totalExploit);
       LogInfo.end_track();
     }
     // Explore only on the first training iteration
-    if (CollaborativePruner.stats.iter.equals("0.train") && computeExpectedCounts && !exploitSucceeds
-        && (CollaborativePruner.stats.totalExplore <= CollaborativePruner.opts.maxExplorationIters)) {
+    if (pruner.stats.iter.equals("0.train") && computeExpectedCounts && !exploitSucceeds
+        && (pruner.stats.totalExplore <= CollaborativePruner.opts.maxExplorationIters)) {
       explore();
-      LogInfo.logs("Consistent pattern: " + CollaborativePruner.getConsistentPattern(ex));
-      LogInfo.logs("Explore success rate: " + CollaborativePruner.stats.successfulExplore + "/" + CollaborativePruner.stats.totalExplore);
+      LogInfo.logs("Consistent pattern: " + pruner.getConsistentPattern(ex));
+      LogInfo.logs("Explore success rate: " + pruner.stats.successfulExplore + "/" + pruner.stats.totalExplore);
     }
     LogInfo.end_track();
   }
 
   public void explore() {
     LogInfo.begin_track("Explore");
-    CollaborativePruner.initialize(ex, CollaborativePruner.Mode.EXPLORE);
+    pruner.initialize(ex, CollaborativePruner.Mode.EXPLORE);
     ParserState exploreParserState = ((CPruneFloatingParser) parser).exploreParser.newParserState(params, ex, computeExpectedCounts);
     exploreParserState.infer();
     predDerivations.clear();
@@ -69,18 +74,18 @@ class CPruneFloatingParserState extends ParserState {
     expectedCounts = exploreParserState.expectedCounts;
     if (computeExpectedCounts) {
       for (Derivation deriv : predDerivations)
-        CollaborativePruner.updateConsistentPattern(parser.valueEvaluator, ex, deriv);
+        pruner.updateConsistentPattern(parser.valueEvaluator, ex, deriv);
     }
-    CollaborativePruner.stats.totalExplore += 1;
-    if (CollaborativePruner.foundConsistentDerivation)
-      CollaborativePruner.stats.successfulExplore += 1;
+    pruner.stats.totalExplore += 1;
+    if (pruner.foundConsistentDerivation)
+      pruner.stats.successfulExplore += 1;
     LogInfo.end_track();
   }
 
   public boolean exploit() {
     LogInfo.begin_track("Exploit");
-    CollaborativePruner.initialize(ex, CollaborativePruner.Mode.EXPLOIT);
-    Grammar miniGrammar = new MiniGrammar(CollaborativePruner.predictedRules);
+    pruner.initialize(ex, CollaborativePruner.Mode.EXPLOIT);
+    Grammar miniGrammar = new MiniGrammar(pruner.predictedRules);
     Parser exploitParser = new FloatingParser(new Parser.Spec(miniGrammar, parser.extractor, parser.executor, parser.valueEvaluator));
     ParserState exploitParserState = exploitParser.newParserState(params, ex, computeExpectedCounts);
     exploitParserState.infer();
@@ -89,12 +94,12 @@ class CPruneFloatingParserState extends ParserState {
     expectedCounts = exploitParserState.expectedCounts;
     if (computeExpectedCounts) {
       for (Derivation deriv : predDerivations)
-        CollaborativePruner.updateConsistentPattern(parser.valueEvaluator, ex, deriv);
+        pruner.updateConsistentPattern(parser.valueEvaluator, ex, deriv);
     }
-    boolean succeeds = CollaborativePruner.foundConsistentDerivation;
-    CollaborativePruner.stats.totalExploit += 1;
+    boolean succeeds = pruner.foundConsistentDerivation;
+    pruner.stats.totalExploit += 1;
     if (succeeds)
-      CollaborativePruner.stats.successfulExploit += 1;
+      pruner.stats.successfulExploit += 1;
     LogInfo.end_track();
     return succeeds;
   }
