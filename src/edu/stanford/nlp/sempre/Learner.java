@@ -27,6 +27,8 @@ public class Learner {
 
     @Option(gloss = "Write predDerivations to examples file (huge)")
     public boolean outputPredDerivations = false;
+    @Option(gloss = "Write predDerivations to examples file (abbreviated)")
+    public boolean outputAbbrevPredDerivations = false;
     @Option(gloss = "Write predicted values to a TSV file")
     public boolean outputPredValues = false;
 
@@ -226,6 +228,9 @@ public class Learner {
         // Write out examples and predictions
         if (opts.outputPredDerivations) {
           ExampleUtils.writeParaphraseSDF(iter, group, ex, true);
+        }
+        if (opts.outputAbbrevPredDerivations) {
+          ExampleUtils.writeAbbrevPredDerivationsTSV(iter, group, ex);
         }
         if (opts.outputPredValues) {
           ExampleUtils.writePredictionTSV(iter, group, ex);

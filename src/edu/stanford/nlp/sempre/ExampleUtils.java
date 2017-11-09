@@ -119,6 +119,29 @@ public final class ExampleUtils {
     out.close();
   }
 
+  public static void writeAbbrevPredDerivationsTSV(int iter, String group, Example ex) {
+    String basePath = "preds-iter" + iter + "-" + group + ".derivs.txt";
+    String outPath = Execution.getFile(basePath);
+    if (outPath == null) return;
+    PrintWriter out = IOUtils.openOutAppendHard(outPath);
+
+    out.printf("########## %s ##########\n", ex.id);
+    out.printf("#\t%s\tUTT\t%s\n", ex.id, ex.utterance);
+    out.printf("#\t%s\tNUM\t%d\n", ex.id, ex.predDerivations.size());
+
+    int i = 0;
+    for (Derivation deriv : ex.predDerivations) {
+      out.printf("#\t%s\t%d\t%s\t%s\n", ex.id, i, deriv.formula, deriv.value);
+      List<String> valueStrings = new ArrayList<>();
+      for (Value v : ((ListValue) deriv.value).values) {
+        valueStrings.add(v.pureString().replaceAll("\\s+", " ").trim());
+      }
+      out.printf("%s\t%s\n", ex.id, String.join("\t", valueStrings));
+      i++;
+    }
+    out.close();
+  }
+
   public static void writePredictionTSV(int iter, String group, Example ex) {
     String basePath = "preds-iter" + iter + "-" + group + ".tsv";
     String outPath = Execution.getFile(basePath);
