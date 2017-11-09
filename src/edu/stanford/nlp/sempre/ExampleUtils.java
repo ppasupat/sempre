@@ -127,18 +127,26 @@ public final class ExampleUtils {
 
     out.printf("########## %s ##########\n", ex.id);
     out.printf("#\t%s\tUTT\t%s\n", ex.id, ex.utterance);
-    out.printf("#\t%s\tNUM\t%d\n", ex.id, ex.predDerivations.size());
 
-    int i = 0;
-    for (Derivation deriv : ex.predDerivations) {
-      out.printf("#\t%s\t%d\t%s\t%s\n", ex.id, i, deriv.formula, deriv.value);
-      List<String> valueStrings = new ArrayList<>();
-      for (Value v : ((ListValue) deriv.value).values) {
-        valueStrings.add(v.pureString().replaceAll("\\s+", " ").trim());
+    if (ex.predDerivations.isEmpty()) {
+      // Add a fake derivation
+      out.printf("#\t%s\tNUM\t%d\n", ex.id, 1);
+      out.printf("#\t%s\t%d\t%s\t%s\n", ex.id, 0, "NULL", "NULL");
+      out.printf("%s\n", ex.id);
+    } else {
+      out.printf("#\t%s\tNUM\t%d\n", ex.id, ex.predDerivations.size());
+      int i = 0;
+      for (Derivation deriv : ex.predDerivations) {
+        out.printf("#\t%s\t%d\t%s\t%s\n", ex.id, i, deriv.formula, deriv.value);
+        List<String> valueStrings = new ArrayList<>();
+        for (Value v : ((ListValue) deriv.value).values) {
+          valueStrings.add(v.pureString().replaceAll("\\s+", " ").trim());
+        }
+        out.printf("%s\t%s\n", ex.id, String.join("\t", valueStrings));
+        i++;
       }
-      out.printf("%s\t%s\n", ex.id, String.join("\t", valueStrings));
-      i++;
     }
+
     out.close();
   }
 
