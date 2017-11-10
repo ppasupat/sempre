@@ -131,13 +131,13 @@ public final class ExampleUtils {
     if (ex.predDerivations.isEmpty()) {
       // Add a fake derivation
       out.printf("#\t%s\tNUM\t%d\n", ex.id, 1);
-      out.printf("#\t%s\t%d\t%s\t%s\n", ex.id, 0, "NULL", "NULL");
+      out.printf("#\t%s\t%d\t%.3f\t%s\t%s\t%s\n", ex.id, 0, 0., false, "NULL", "NULL");
       out.printf("%s\n", ex.id);
     } else {
       out.printf("#\t%s\tNUM\t%d\n", ex.id, ex.predDerivations.size());
       int i = 0;
       for (Derivation deriv : ex.predDerivations) {
-        out.printf("#\t%s\t%d\t%s\t%s\n", ex.id, i, deriv.formula, deriv.value);
+        out.printf("#\t%s\t%d\t%.3f\t%s\t%s\t%s\n", ex.id, i, deriv.score, deriv.compatibility == 1., deriv.formula, deriv.value);
         List<String> valueStrings = new ArrayList<>();
         for (Value v : ((ListValue) deriv.value).values) {
           valueStrings.add(v.pureString().replaceAll("\\s+", " ").trim());
