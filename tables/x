@@ -2,7 +2,7 @@
 # Usage:
 #   ./x up
 #       Upload the compiled code and the run file into a bundle called `stuff`
-#   ./x {walk|run|jog} [-n] [-- additional_dependencies --] run_arguments
+#   ./x run [-n] [-- additional_dependencies --] run_arguments
 #       Call cl run on the ./run script. The run name is automatically generated.
 #       Use -n to print the command and exit.
 
@@ -20,14 +20,10 @@ if [ "$operation" == "up" ]; then
   cl upload -L -n stuff xxx
   rm -rf xxx
   exit 0
-elif [ "$operation" == "walk" ]; then
-  queue="--request-memory 11g --request-cpus 2 --request-queue nlp"
 elif [ "$operation" == "run" ]; then
-  queue="--request-memory 11g --request-cpus 2 --request-queue john"
-elif [ "$operation" == "jog" ]; then
-  queue="--request-memory 11g --request-cpus 2 --request-queue jag"
+  queue="--request-memory 10g --request-cpus 2"
 else
-  echo "Available operation: up walk run jog"
+  echo "Available operation: up run"
   exit 1
 fi
 
@@ -37,7 +33,7 @@ if [ "$1" == "-n" ]; then
   dryrun=1;
 fi
 
-dependencies=":fig :lib libsempre:stuff/libsempre module-classes.txt:stuff/module-classes.txt run:stuff/run grammars:stuff/grammars :WikiTableQuestions"
+dependencies=":fig :lib libsempre:stuff/libsempre module-classes.txt:stuff/module-classes.txt run:stuff/run grammars:stuff/grammars WikiTableQuestions:WikiTableQuestions-1.0.2"
 if [ "$1" == "--" ]; then
   shift 
   while [ "$1" != "--" ]; do
@@ -50,7 +46,7 @@ fi
 prefix=`hostname`
 if [[ "$prefix" == j* ]]; then
   prefix="nlp"
-elif [ "$prefix" != "nazrin" -a "$prefix" != "fandango" ]; then
+elif [ "$prefix" != "shadowwolf" -a "$prefix" != "fandango" ]; then
   prefix="what"
 fi
 name=$(YAY=$(cat .cnt.info || echo 0) && echo $(($YAY + 1)) > .cnt.info && echo -n $prefix-$YAY.cl)
