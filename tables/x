@@ -21,7 +21,7 @@ if [ "$operation" == "up" ]; then
   rm -rf xxx
   exit 0
 elif [ "$operation" == "run" ]; then
-  queue="--request-memory 10g --request-cpus 2"
+  queue="--request-memory 10g --request-cpus 2 --request-docker-image codalab/ubuntu:1.9"
 else
   echo "Available operation: up run"
   exit 1
@@ -51,6 +51,6 @@ elif [ "$prefix" != "shadowwolf" -a "$prefix" != "fandango" ]; then
 fi
 name=$(YAY=$(cat .cnt.info || echo 0) && echo $(($YAY + 1)) > .cnt.info && echo -n $prefix-$YAY.cl)
 cl_run_args="cl run $queue -n $name $dependencies"
-cl_run_command="LC_ALL=C.UTF-8 ./run @cldir=1 $*"
+cl_run_command="LC_ALL=C.UTF-8 ruby ./run @cldir=1 $*"
 echo "$cl_run_args \"$cl_run_command\""
 [ $dryrun ] || $cl_run_args "$cl_run_command"
